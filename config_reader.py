@@ -3,13 +3,11 @@ from pydantic import BaseSettings, SecretStr
 
 class Settings(BaseSettings):
     bot_token: SecretStr
-    admin_bot_token: SecretStr
-    admin_bot_password: SecretStr
-    bot_url: SecretStr
     db_name: SecretStr
     db_user: SecretStr
-    db_host: SecretStr
     db_password: SecretStr
+    db_host: SecretStr
+
 
     class Config:
         env_file = '.env'

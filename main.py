@@ -37,6 +37,16 @@ like = InlineKeyboardMarkup(text='🔥', callback_data='reaction_l')
 dislike = InlineKeyboardMarkup(text='🤢', callback_data='reaction_d')
 keybd_reaction = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(like, dislike)
 
+yes = InlineKeyboardMarkup(text='Да✅', callback_data='yes')
+keybd_yes = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
+    yes
+)
+
+sub = InlineKeyboardMarkup(text='Подписалась👌', callback_data='sub')
+keybd_sub = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
+    sub
+)
+
 bot = Bot(token=config.bot_token.get_secret_value())
 dp = Dispatcher(bot, storage=storage)
 
@@ -75,7 +85,7 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
         itog = 'зеленый'
         await bot.send_message(callback_query.from_user.id, 'Совет для зелёноглазых')
     await bot.send_message(callback_query.from_user.id, 'Как вам совет?', reply_markup=keybd_reaction)
-    await bot.send_message(callback_query.from_user.id, 'Подобрать еще советик?', reply_markup=keybd_move)
+    await bot.send_message(callback_query.from_user.id, 'Подобрать еще советик?', reply_markup=keybd_yes)
     await state.finish()
 
 
@@ -83,6 +93,18 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
 async def reaction(callback_query: types.CallbackQuery):
     ans = callback_query.data
     print(ans)
+
+@dp.callback_query_handler(Text(startswith=('yes')))
+async def btn_yes(callback_query: types.CallbackQuery):
+    await bot.send_message(callback_query.from_user.id, 'Что бы получить еще один совет, подпишись на канал\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+
+@dp.callback_query_handler(Text(startswith=('sub')))
+async def btn_sub(callback_query: types.CallbackQuery):
+    user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
+    if user_channel_status["status"] != 'left':
+        await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
+    else:
+        await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова', reply_markup=keybd_sub)
 
 
 executor.start_polling(dp, skip_updates=True)

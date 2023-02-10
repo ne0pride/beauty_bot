@@ -64,6 +64,7 @@ async def command_start(message: types.Message):
 
 @dp.message_handler(lambda message: message.text == 'Пройти тест', state=None)
 async def keywords(message: types.Message):
+    # сделать проверку на первое прохождение, не давать пройти второй раз если не подписан на канал
     await Test_one.color_eyes.set()
     await bot.send_message(message.from_user.id, "Выберите свой цвет глаз", reply_markup=keybd_test_1)
 

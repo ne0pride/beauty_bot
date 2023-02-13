@@ -57,8 +57,14 @@ async def command_start(message: types.Message):
     try:
         if (not await bd.user_exists(message.from_user.id)):
             await bd.add_user(message.from_user.id, str(message.from_user.first_name))
-        await bot.send_message(message.from_user.id, 'Привет! Это бот “Beauty for you”', reply_markup=keybd_move)
+        photo_res = InputFile('start.JPG')
+        await bot.send_photo(message.from_user.id, photo=photo_res, caption='Привет!\n'
+                                                                            'Рада знакомству\n'
+                                                                            'Я подберу лучшие варианты макияжа специально для тебя и расскажу все тонкости 😊')
+        await bot.send_message(message.from_user.id, 'Для начала нажми кнопку пройти тест и выбери свой цвет глаз.',
+                               reply_markup=keybd_move)
     except:
+        print(str(Exception))
         await message.reply('Ошибка')
 
 
@@ -95,9 +101,13 @@ async def reaction(callback_query: types.CallbackQuery):
     ans = callback_query.data
     print(ans)
 
+
 @dp.callback_query_handler(Text(startswith=('yes')))
 async def btn_yes(callback_query: types.CallbackQuery):
-    await bot.send_message(callback_query.from_user.id, 'Что бы получить еще один совет, подпишись на канал\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+    await bot.send_message(callback_query.from_user.id,
+                           'Что бы получить еще один совет, подпишись на канал\n https://t.me/dfgfdw32',
+                           reply_markup=keybd_sub)
+
 
 @dp.callback_query_handler(Text(startswith=('sub')))
 async def btn_sub(callback_query: types.CallbackQuery):
@@ -105,7 +115,8 @@ async def btn_sub(callback_query: types.CallbackQuery):
     if user_channel_status["status"] != 'left':
         await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
     else:
-        await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова', reply_markup=keybd_sub)
+        await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова',
+                               reply_markup=keybd_sub)
 
 
 executor.start_polling(dp, skip_updates=True)

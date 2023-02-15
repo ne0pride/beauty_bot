@@ -57,6 +57,7 @@ async def command_start(message: types.Message):
     try:
         if (not await bd.user_exists(message.from_user.id)):
             await bd.add_user(message.from_user.id, str(message.from_user.first_name))
+            await bd.add_user_info(message.from_user.id)
         photo_res = InputFile('start.JPG')
         await bot.send_photo(message.from_user.id, photo=photo_res, caption='Привет!\n'
                                                                             'Рада знакомству\n'
@@ -69,10 +70,21 @@ async def command_start(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text == 'Пройти тест', state=None)
-async def keywords(message: types.Message):
-    # сделать проверку на первое прохождение, не давать пройти второй раз если не подписан на канал
-    await Test_one.color_eyes.set()
-    await bot.send_message(message.from_user.id, "Выберите свой цвет глаз", reply_markup=keybd_test_1)
+async def start_test(message: types.Message):
+    user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=message.from_user.id)
+    if user_channel_status["status"] == 'left':
+        await bd.sub_unable(message.from_user.id)
+    activate = await bd.chek_activate(message.from_user.id)
+    if int(activate) == 1:
+        await bot.send_message(message.from_user.id, 'Что бы пройти тест ещё раз, подпишитесь на канал:'
+                                                     '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+    elif int(activate) == 0:
+        await bd.activate(message.from_user.id)
+        await Test_one.color_eyes.set()
+        await bot.send_message(message.from_user.id, "Выберите свой цвет глаз", reply_markup=keybd_test_1)
+    else:
+        await Test_one.color_eyes.set()
+        await bot.send_message(message.from_user.id, "Выберите свой цвет глаз", reply_markup=keybd_test_1)
 
 
 @dp.callback_query_handler(Text(startswith=('c_')), state=Test_one.color_eyes)
@@ -84,14 +96,24 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
         await bot.send_message(callback_query.from_user.id, 'Совет для кариглазых')
     elif ans == 'c_g':
         itog = 'голубой'
-        await bot.send_message(callback_query.from_user.id, 'Совет для голубоглазых')
+        await bot.send_message(callback_query.from_user.id,
+                               '🌸 Девушкам с голубыми глазами отлично подходят светлые тёплые цвета теней:\nзолотой, розовый, персиковый, медный, кофейный и т.д.')
+        await bot.send_message(callback_query.from_user.id,
+                               '🌸 Если у тебя светлая кожа, добавь в свою косметичку более нежные оттенки, например: \nперсиковый, кремовый, молочный шоколад, или пудровый')
+        await bot.send_message(callback_query.from_user.id,
+                               '🌸 Если тебе нравятся холодные оттенки, попробуй использовать контрастные цвета: \nфиолетовый, кобальтовый, или ультрамариновый. Следи, чтобы оттенок теней не совпадал с оттенком глаз на 100%')
+        photo_res = InputFile('make_for_blue_eays.JPG')
+        await bot.send_photo(callback_query.from_user.id, photo=photo_res)
     elif ans == 'c_s':
         itog = 'серый'
         await bot.send_message(callback_query.from_user.id, 'Совет для сероглазых')
     elif ans == 'c_z':
         itog = 'зеленый'
         await bot.send_message(callback_query.from_user.id, 'Совет для зелёноглазых')
-    await bot.send_message(callback_query.from_user.id, 'Как вам совет?', reply_markup=keybd_reaction)
+        photo_res = InputFile('make_for_green_eays.JPG')
+        await bot.send_photo(callback_query.from_user.id, photo=photo_res)
+    await bot.send_message(callback_query.from_user.id, 'Как тебе мои бьюти-советы сегодня?',
+                           reply_markup=keybd_reaction)
     await bot.send_message(callback_query.from_user.id, 'Подобрать еще советик?', reply_markup=keybd_yes)
     await state.finish()
 
@@ -104,15 +126,19 @@ async def reaction(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(Text(startswith=('yes')))
 async def btn_yes(callback_query: types.CallbackQuery):
-    await bot.send_message(callback_query.from_user.id,
-                           'Что бы получить еще один совет, подпишись на канал\n https://t.me/dfgfdw32',
-                           reply_markup=keybd_sub)
+    activate = await bd.chek_activate(callback_query.from_user.id)
+    if int(activate) == 1:
+        await bot.send_message(callback_query.from_user.id, 'Что бы пройти тест ещё раз, подпишитесь на канал:'
+                                                            '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+    else:
+        await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
 
 
 @dp.callback_query_handler(Text(startswith=('sub')))
 async def btn_sub(callback_query: types.CallbackQuery):
     user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
     if user_channel_status["status"] != 'left':
+        await bd.sub(callback_query.from_user.id)
         await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
     else:
         await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова',

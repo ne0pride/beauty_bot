@@ -108,3 +108,15 @@ async def sub_unable(user_id):
     except Exception as e:
         conn.rollback()
         print('rlbk sub' + str(e))
+
+async def get_moves(btn,num):
+    cur.execute(
+        "SELECT moves FROM messages WHERE position('{}' in buttons) > 0".format(
+            btn))
+    moves = cur.fetchone()[0]
+    # print(moves)
+    msgs = (str(moves).split("/\\"))
+    msg = (msgs[int(num)].strip())
+    return msg
+    # moves = str(*moves).split("/\\")
+    # print(moves[int(num)])

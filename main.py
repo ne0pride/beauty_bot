@@ -67,6 +67,7 @@ async def command_start(message: types.Message):
     except:
         print(str(Exception))
         await message.reply('Ошибка')
+        await bot.send_document()
 
 
 @dp.message_handler(lambda message: message.text == 'Пройти тест', state=None)
@@ -143,6 +144,16 @@ async def btn_sub(callback_query: types.CallbackQuery):
     else:
         await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова',
                                reply_markup=keybd_sub)
+
+
+@dp.callback_query_handler(Text(startswith=('tk')))
+async def btn_sub(callback_query: types.CallbackQuery):
+    btn = (str(callback_query.data)[2:-1])
+    num = (str(callback_query.data)[-1])
+    print(btn)
+    print(num)
+    msg = await bd.get_moves(btn, num)
+    await bot.send_message(callback_query.from_user.id, msg, reply_markup=keybd_move)
 
 
 executor.start_polling(dp, skip_updates=True)

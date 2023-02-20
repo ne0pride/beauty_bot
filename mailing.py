@@ -15,7 +15,7 @@ cur = conn.cursor()
 
 
 async def send_m():
-    cur.execute("SELECT question, buttons FROM messages WHERE id_message = 2")
+    cur.execute("SELECT question, buttons, photo FROM messages WHERE id_message = 2")
     question = [i for i in cur.fetchall()[0]]
     # btn = cur.fetchall()[1]
     # moves = cur.fetchall()[2]

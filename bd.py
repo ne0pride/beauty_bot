@@ -66,6 +66,7 @@ async def chek_activate(user_id):
         conn.rollback()
         print('rlbk chek activate' + str(e))
 
+
 async def add_user_info(user_id):
     try:
         cur.execute(
@@ -73,13 +74,14 @@ async def add_user_info(user_id):
         id = cur.fetchone()
         print(id)
         cur.execute(
-            "INSERT INTO users_info (user_id, activate) VALUES ('{}','{}')".format(id[0], 0,))
+            "INSERT INTO users_info (user_id, activate) VALUES ('{}','{}')".format(id[0], 0, ))
         conn.commit()
 
 
     except Exception as e:
         conn.rollback()
         print('rlbk add user inf' + str(e))
+
 
 async def sub(user_id):
     try:
@@ -95,6 +97,7 @@ async def sub(user_id):
         conn.rollback()
         print('rlbk sub' + str(e))
 
+
 async def sub_unable(user_id):
     try:
         cur.execute(
@@ -109,14 +112,39 @@ async def sub_unable(user_id):
         conn.rollback()
         print('rlbk sub' + str(e))
 
-async def get_moves(btn,num):
-    cur.execute(
-        "SELECT moves FROM messages WHERE position('{}' in buttons) > 0".format(
-            btn))
-    moves = cur.fetchone()[0]
-    # print(moves)
-    msgs = (str(moves).split("/\\"))
-    msg = (msgs[int(num)].strip())
-    return msg
-    # moves = str(*moves).split("/\\")
-    # print(moves[int(num)])
+
+async def get_moves(btn, num):
+    try:
+        cur.execute(
+            "SELECT moves FROM messages WHERE position('{}' in buttons) > 0".format(
+                btn))
+        moves = cur.fetchone()[0]
+        # print(moves)
+        msgs = (str(moves).split("/\\"))
+        msg = (msgs[int(num)].strip())
+        return msg
+        # moves = str(*moves).split("/\\")
+        # print(moves[int(num)])
+    except Exception as e:
+        conn.rollback()
+        print('rlbk get moves' + str(e))
+
+
+async def get_count_messages():
+    try:
+        cur.execute("SELECT MAX(id_message) FROM messages")
+        id = cur.fetchone()
+        return id[0]
+    except Exception as e:
+        conn.rollback()
+        print('rlbk gcm' + str(e))
+
+
+async def get_users():
+    try:
+        cur.execute("SELECT tg_id FROM users")
+        users_id = [i[0] for i in cur.fetchall()]
+        return users_id
+    except Exception as e:
+        conn.rollback()
+        print('rlbk get users' + str(e))

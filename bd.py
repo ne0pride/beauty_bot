@@ -148,3 +148,12 @@ async def get_users():
     except Exception as e:
         conn.rollback()
         print('rlbk get users' + str(e))
+
+async def get_count_advices():
+    try:
+        cur.execute("SELECT MAX(id_advice) FROM advices")
+        id = cur.fetchone()
+        return id[0]
+    except Exception as e:
+        conn.rollback()
+        print('rlbk gca' + str(e))

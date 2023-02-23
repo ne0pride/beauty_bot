@@ -15,6 +15,7 @@ import asyncio
 import json
 import psycopg2
 import bd
+import random
 
 global counter_sms
 counter_sms = 1
@@ -51,6 +52,10 @@ keybd_reaction = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=Tr
 yes = InlineKeyboardMarkup(text='Да✅', callback_data='yes')
 keybd_yes = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
     yes
+)
+yes_advice = InlineKeyboardMarkup(text='Да✅', callback_data='yes_a')
+keybd_yes_advice = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
+    yes_advice
 )
 
 sub = InlineKeyboardMarkup(text='Подписалась👌', callback_data='sub')
@@ -95,9 +100,31 @@ async def send():
     except Exception as e:
         print('rlbk in send ' + str(e))
 
-async def scheduler():
-    aioschedule.every(1).minutes.do(send)
 
+async def send_advice(id=None):
+    if id is not None:
+        print('===')
+        print(id)
+        count_a = await bd.get_count_messages()
+        cur.execute("SELECT advice FROM advices WHERE id_advice = '{}'".format(random.randrange(1, count_a)))
+        advice = cur.fetchone()
+        await bot.send_message(id, advice[0])
+        await bot.send_message(id, 'Подобрать ещё советик?', reply_markup=keybd_yes_advice)
+    else:
+        users_id = await bd.get_users()
+        count_a = await bd.get_count_messages()
+        cur.execute("SELECT advice FROM advices WHERE id_advice = '{}'".format(random.randrange(1, count_a)))
+        advice = cur.fetchone()
+        for i in users_id:
+            try:
+                await bot.send_message(i, advice[0])
+                await bot.send_message(i, 'Подобрать ещё советик?', reply_markup=keybd_yes_advice)
+            except Exception as e:
+                print(str(e))
+
+async def scheduler():
+    aioschedule.every(2).minutes.do(send)
+    aioschedule.every(1).minutes.do(send_advice)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
@@ -123,7 +150,6 @@ async def command_start(message: types.Message):
     except:
         print(str(Exception))
         await message.reply('Ошибка')
-        await bot.send_document()
 
 
 @dp.message_handler(lambda message: message.text == 'Пройти тест', state=None)
@@ -178,7 +204,7 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
         await bot.send_photo(callback_query.from_user.id, photo=photo_res)
     await bot.send_message(callback_query.from_user.id, 'Как тебе мои бьюти-советы сегодня?',
                            reply_markup=keybd_reaction)
-    await bot.send_message(callback_query.from_user.id, 'Подобрать еще советик?', reply_markup=keybd_yes)
+    await bot.send_message(callback_query.from_user.id, 'Пройти тест еще раз?', reply_markup=keybd_yes)
     await state.finish()
 
 
@@ -190,12 +216,40 @@ async def reaction(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(Text(startswith=('yes')))
 async def btn_yes(callback_query: types.CallbackQuery):
+    adv = 0
+    print(callback_query.data[-1])
+    if callback_query.data[-1] == 'a':
+        adv = 1
     activate = await bd.chek_activate(callback_query.from_user.id)
-    if int(activate) == 1:
-        await bot.send_message(callback_query.from_user.id, 'Что бы пройти тест ещё раз, подпишитесь на канал:'
-                                                            '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+    if adv == 0:
+        if int(activate) == 1:
+            await bot.send_message(callback_query.from_user.id, 'Что бы пройти тест ещё раз, подпишитесь на канал:'
+                                                                '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+        else:
+            await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
     else:
-        await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
+        if int(activate) == 1:
+            await bot.send_message(callback_query.from_user.id, 'Что бы подобрать еще совет, подпишитесь на канал:'
+                                                                '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+        else:
+            print('ent')
+            user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
+            if user_channel_status["status"] == 'left':
+                await bd.sub_unable(callback_query.from_user.id)
+            activate = await bd.chek_activate(callback_query.from_user.id)
+            print(activate)
+            if int(activate) == 1:
+                await bot.send_message(callback_query.from_user.id, 'Что бы подобрать еще совет, подпишитесь на канал:'
+                                                                    '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+            elif int(activate) == 0:
+                print('защел в совет')
+                count_a = await bd.get_count_messages()
+                cur.execute("SELECT advice FROM advices WHERE id_advice = '{}'".format(random.randrange(1, count_a)))
+                advice = cur.fetchone()
+                print(advice)
+                print(callback_query.from_user.id)
+                await bot.send_message(callback_query.from_user.id, advice[0])
+                await bot.send_message(callback_query.from_user.id, 'Подобрать ещё советик?', reply_markup=keybd_yes_advice)
 
 
 @dp.callback_query_handler(Text(startswith=('sub')))
@@ -224,6 +278,14 @@ async def btn_sub(callback_query: types.CallbackQuery):
         await bot.send_message(callback_query.from_user.id, 'С тобой свяжется наш менеджер', reply_markup=keybd_move)
     else:
         await bot.send_message(callback_query.from_user.id, msg, reply_markup=keybd_move)
+
+
+@dp.message_handler(lambda message: message.text == 'Записаться на консультацию')
+async def cons(message: types.Message):
+    await bot.send_message(5907862004, 'Свяжись с' + ' https://t.me/' + str(message.from_user.username),
+                           reply_markup=keybd_move)
+    await bot.send_message(message.from_user.id, 'С тобой свяжется наш менеджер', reply_markup=keybd_move)
+
 
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

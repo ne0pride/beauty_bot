@@ -63,6 +63,11 @@ keybd_sub = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).r
     sub
 )
 
+subadvice = InlineKeyboardMarkup(text='Подписалась👌', callback_data='sub_advice')
+keybd_subadvice = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(
+    subadvice
+)
+
 bot = Bot(token=config.bot_token.get_secret_value())
 dp = Dispatcher(bot, storage=storage)
 
@@ -230,7 +235,7 @@ async def btn_yes(callback_query: types.CallbackQuery):
     else:
         if int(activate) == 1:
             await bot.send_message(callback_query.from_user.id, 'Что бы подобрать еще совет, подпишитесь на канал:'
-                                                                '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
+                                                                '\n https://t.me/dfgfdw32', reply_markup=keybd_subadvice)
         else:
             print('ent')
             user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
@@ -240,13 +245,12 @@ async def btn_yes(callback_query: types.CallbackQuery):
             print(activate)
             if int(activate) == 1:
                 await bot.send_message(callback_query.from_user.id, 'Что бы подобрать еще совет, подпишитесь на канал:'
-                                                                    '\n https://t.me/dfgfdw32', reply_markup=keybd_sub)
-            elif int(activate) == 0:
+                                                                    '\n https://t.me/dfgfdw32', reply_markup=keybd_subadvice)
+            else:
                 print('защел в совет')
                 count_a = await bd.get_count_messages()
                 cur.execute("SELECT advice FROM advices WHERE id_advice = '{}'".format(random.randrange(1, count_a)))
                 advice = cur.fetchone()
-                print(advice)
                 print(callback_query.from_user.id)
                 await bot.send_message(callback_query.from_user.id, advice[0])
                 await bot.send_message(callback_query.from_user.id, 'Подобрать ещё советик?', reply_markup=keybd_yes_advice)
@@ -254,13 +258,30 @@ async def btn_yes(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(Text(startswith=('sub')))
 async def btn_sub(callback_query: types.CallbackQuery):
-    user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
-    if user_channel_status["status"] != 'left':
-        await bd.sub(callback_query.from_user.id)
-        await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
+    adv = 0
+    if callback_query.data[-1] == 'e':
+        adv = 1
+    if adv == 0:
+        user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
+        if user_channel_status["status"] != 'left':
+            await bd.sub(callback_query.from_user.id)
+            await bot.send_message(callback_query.from_user.id, 'Нажмите, чтобы пройти тест', reply_markup=keybd_move)
+        else:
+            await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова',
+                                   reply_markup=keybd_sub)
     else:
-        await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова',
-                               reply_markup=keybd_sub)
+        user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
+        if user_channel_status["status"] != 'left':
+            await bd.sub(callback_query.from_user.id)
+            count_a = await bd.get_count_messages()
+            cur.execute("SELECT advice FROM advices WHERE id_advice = '{}'".format(random.randrange(1, count_a)))
+            advice = cur.fetchone()
+            print(callback_query.from_user.id)
+            await bot.send_message(callback_query.from_user.id, advice[0])
+            await bot.send_message(callback_query.from_user.id, 'Подобрать ещё советик?', reply_markup=keybd_yes_advice)
+        else:
+            await bot.send_message(callback_query.from_user.id, 'Вы не подписались, подпишитесь, и нажмите снова',
+                                   reply_markup=keybd_subadvice)
 
 
 @dp.callback_query_handler(Text(startswith=('tk')))

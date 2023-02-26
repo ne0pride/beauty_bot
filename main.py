@@ -9,7 +9,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import InputFile, InputMedia
-from config_reader import config
+# from config_reader import config
 import aioschedule
 import asyncio
 import json
@@ -20,8 +20,8 @@ import random
 global counter_sms
 counter_sms = 1
 
-conn = psycopg2.connect(dbname=config.db_name.get_secret_value(), user=config.db_user.get_secret_value(),
-                        password=config.db_password.get_secret_value(), host=config.db_host.get_secret_value())
+conn = psycopg2.connect(dbname='beautybot', user='postgres',
+                        password='c7ym7CYD', host='localhost', port='5432')
 cur = conn.cursor()
 
 storage = MemoryStorage()
@@ -32,7 +32,7 @@ class Test_one(StatesGroup):
 
 
 # кнопки выбора действия
-start_test = KeyboardButton(text='Пройти тест')
+start_test = KeyboardButton(text='Подобрать мне макияж')
 consultation = KeyboardButton(text='Записаться на консультацию')
 keybd_move = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False).add(
     start_test, consultation)
@@ -68,7 +68,7 @@ keybd_subadvice = InlineKeyboardMarkup(resize_keyboard=True, one_time_keyboard=T
     subadvice
 )
 
-bot = Bot(token=config.bot_token.get_secret_value())
+bot = Bot(token='6032924863:AAEn7AfhJ8H4qbEHYoCaGQcUlwrUuIA4pkI')
 dp = Dispatcher(bot, storage=storage)
 
 
@@ -128,8 +128,8 @@ async def send_advice(id=None):
                 print(str(e))
 
 async def scheduler():
-    aioschedule.every(2).minutes.do(send)
-    aioschedule.every(1).minutes.do(send_advice)
+    aioschedule.every().day.at("12:30").do(send_advice)
+    aioschedule.every().monday.at("12:00").do(send)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
@@ -146,7 +146,7 @@ async def command_start(message: types.Message):
         if (not await bd.user_exists(message.from_user.id)):
             await bd.add_user(message.from_user.id, str(message.from_user.first_name))
             await bd.add_user_info(message.from_user.id)
-        photo_res = InputFile('start.JPG')
+        photo_res = InputFile('start.PNG')
         await bot.send_photo(message.from_user.id, photo=photo_res, caption='Привет!\n'
                                                                             'Рада знакомству\n'
                                                                             'Я подберу лучшие варианты макияжа специально для тебя и расскажу все тонкости 😊')
@@ -157,7 +157,7 @@ async def command_start(message: types.Message):
         await message.reply('Ошибка')
 
 
-@dp.message_handler(lambda message: message.text == 'Пройти тест', state=None)
+@dp.message_handler(lambda message: message.text == 'Подобрать мне макияж', state=None)
 async def start_test(message: types.Message):
     user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=message.from_user.id)
     if user_channel_status["status"] == 'left':
@@ -187,6 +187,8 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
                                '🌸 Если у тебя светлые волосы, постарайся в макияже делать акцент на глаза. Это сделает твой образ более ярким и запоминающимся ')
         await bot.send_message(callback_query.from_user.id,
                                '🌸 Если тебе нравятся более спокойные цвета, используй: персиковый, сливовый, бежевый, кофейный и т.д')
+        photo_res = InputFile('make_for_kar_eays.PNG')
+        await bot.send_photo(callback_query.from_user.id, photo=photo_res)
     elif ans == 'c_g':
         itog = 'голубой'
         await bot.send_message(callback_query.from_user.id,
@@ -195,7 +197,7 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
                                '🌸 Если у тебя светлая кожа, добавь в свою косметичку более нежные оттенки, например: \nперсиковый, кремовый, молочный шоколад, или пудровый')
         await bot.send_message(callback_query.from_user.id,
                                '🌸 Если тебе нравятся холодные оттенки, попробуй использовать контрастные цвета: \nфиолетовый, кобальтовый, или ультрамариновый. Следи, чтобы оттенок теней не совпадал с оттенком глаз на 100%')
-        photo_res = InputFile('make_for_blue_eays.JPG')
+        photo_res = InputFile('make_for_blue_eays.PNG')
         await bot.send_photo(callback_query.from_user.id, photo=photo_res)
     elif ans == 'c_z':
         itog = 'зеленый'
@@ -205,7 +207,7 @@ async def choose_color(callback_query: types.CallbackQuery, state: FSMContext):
                                '🌸 Старайся избегать ярко-синих и серебристых оттенков — они могут придать глазам уставший вид и лишить их выразительности')
         await bot.send_message(callback_query.from_user.id,
                                '🌸 Попробуй добавить контрастные цвета: например, красные стрелки отлично дополнят твой образ')
-        photo_res = InputFile('make_for_green_eays.JPG')
+        photo_res = InputFile('make_for_green_eays.PNG')
         await bot.send_photo(callback_query.from_user.id, photo=photo_res)
     await bot.send_message(callback_query.from_user.id, 'Как тебе мои бьюти-советы сегодня?',
                            reply_markup=keybd_reaction)

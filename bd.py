@@ -1,11 +1,10 @@
 import psycopg2
-import requests
 import asyncio
 import datetime
-from config_reader import config
+# from config_reader import config
 
-conn = psycopg2.connect(dbname=config.db_name.get_secret_value(), user=config.db_user.get_secret_value(),
-                        password=config.db_password.get_secret_value(), host=config.db_host.get_secret_value())
+conn = psycopg2.connect(dbname='beautybot', user='postgres',
+                        password='c7ym7CYD', host='localhost', port='5432')
 cur = conn.cursor()
 
 

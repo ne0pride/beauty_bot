@@ -35,7 +35,7 @@ class Test_one(StatesGroup):
 start_test = KeyboardButton(text='Подобрать мне макияж')
 consultation = KeyboardButton(text='Записаться на консультацию')
 keybd_move = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False).add(
-    start_test, consultation)
+    start_test)
 
 btn_1 = InlineKeyboardMarkup(text='карий', callback_data='c_k')
 btn_2 = InlineKeyboardMarkup(text='голубой', callback_data='c_g')
@@ -127,6 +127,7 @@ async def send_advice(id=None):
             except Exception as e:
                 print(str(e))
 
+
 async def scheduler():
     aioschedule.every().day.at("12:30").do(send_advice)
     aioschedule.every().monday.at("12:00").do(send)
@@ -147,9 +148,8 @@ async def command_start(message: types.Message):
             await bd.add_user(message.from_user.id, str(message.from_user.first_name))
             await bd.add_user_info(message.from_user.id)
         photo_res = InputFile('start.PNG')
-        await bot.send_photo(message.from_user.id, photo=photo_res, caption='Привет!\n'
-                                                                            'Рада знакомству\n'
-                                                                            'Я подберу лучшие варианты макияжа специально для тебя и расскажу все тонкости 😊')
+        await bot.send_photo(message.from_user.id, photo=photo_res,
+                             caption='Привет!\nРада знакомству\n Я расскажу тебе все секреты и тонкости макияжа, а еще подберу самые лучшие варианты специально для тебя😊!')
         await bot.send_message(message.from_user.id, 'Для начала нажми кнопку пройти тест и выбери свой цвет глаз.',
                                reply_markup=keybd_move)
     except:
@@ -237,7 +237,8 @@ async def btn_yes(callback_query: types.CallbackQuery):
     else:
         if int(activate) == 1:
             await bot.send_message(callback_query.from_user.id, 'Что бы подобрать еще совет, подпишитесь на канал:'
-                                                                '\n https://t.me/dfgfdw32', reply_markup=keybd_subadvice)
+                                                                '\n https://t.me/dfgfdw32',
+                                   reply_markup=keybd_subadvice)
         else:
             print('ent')
             user_channel_status = await bot.get_chat_member(chat_id='@dfgfdw32', user_id=callback_query.from_user.id)
@@ -247,7 +248,8 @@ async def btn_yes(callback_query: types.CallbackQuery):
             print(activate)
             if int(activate) == 1:
                 await bot.send_message(callback_query.from_user.id, 'Что бы подобрать еще совет, подпишитесь на канал:'
-                                                                    '\n https://t.me/dfgfdw32', reply_markup=keybd_subadvice)
+                                                                    '\n https://t.me/dfgfdw32',
+                                       reply_markup=keybd_subadvice)
             else:
                 print('защел в совет')
                 count_a = await bd.get_count_messages()
@@ -255,7 +257,8 @@ async def btn_yes(callback_query: types.CallbackQuery):
                 advice = cur.fetchone()
                 print(callback_query.from_user.id)
                 await bot.send_message(callback_query.from_user.id, advice[0])
-                await bot.send_message(callback_query.from_user.id, 'Подобрать ещё советик?', reply_markup=keybd_yes_advice)
+                await bot.send_message(callback_query.from_user.id, 'Подобрать ещё советик?',
+                                       reply_markup=keybd_yes_advice)
 
 
 @dp.callback_query_handler(Text(startswith=('sub')))
@@ -308,7 +311,6 @@ async def cons(message: types.Message):
     await bot.send_message(5907862004, 'Свяжись с' + ' https://t.me/' + str(message.from_user.username),
                            reply_markup=keybd_move)
     await bot.send_message(message.from_user.id, 'С тобой свяжется наш менеджер', reply_markup=keybd_move)
-
 
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
